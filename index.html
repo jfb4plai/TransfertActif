@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TransfertActif — écran de classe</title>
+  <meta name="description" content="Les élèves envoient leurs photos et fichiers depuis leur téléphone vers l'écran de la classe, sans compte ni installation.">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="transfertactif.css">
+</head>
+<body>
+  <header class="entete">
+    <img src="logo.svg" alt="">
+    <div>
+      <h1>TransfertActif</h1>
+      <div class="sous-titre">Du téléphone à l'écran de la classe</div>
+    </div>
+    <div class="droite">
+      <span id="etat" class="pastille" role="status">⏳ Connexion…</span>
+      <span id="nb-telephones" class="pastille">📱 0</span>
+    </div>
+  </header>
+
+  <main class="ecran" id="ecran">
+    <section class="carte rejoindre" aria-labelledby="titre-rejoindre">
+      <h2 id="titre-rejoindre">Pour envoyer, scanne :</h2>
+      <div class="qr" id="qr" aria-hidden="true"></div>
+      <p class="code" id="code" aria-label="Code de la classe">·····</p>
+      <p class="lien" id="lien"></p>
+      <div class="outils">
+        <button class="bouton large principal" id="btn-qr-grand">🔍 QR code en grand</button>
+        <button class="bouton" id="btn-pause" aria-pressed="false">⏸️ Pause</button>
+        <button class="bouton" id="btn-pseudos" aria-pressed="false">🙈 Masquer</button>
+        <label class="bouton large" for="fichier-distribuer">📤 Distribuer un document</label>
+        <input type="file" id="fichier-distribuer" hidden>
+      </div>
+      <p class="aide">« Masquer » cache les pseudos à l'écran. « Distribuer » envoie un document (fiche, consigne) à tous les téléphones connectés.</p>
+    </section>
+
+    <section class="galerie-zone" aria-labelledby="titre-galerie">
+      <div class="barre">
+        <h2 id="titre-galerie">Envois reçus <span id="compteur"></span></h2>
+        <div class="droite">
+          <button class="bouton" id="btn-comparer" disabled>⚖️ Comparer (0/2)</button>
+          <button class="bouton" id="btn-diaporama" disabled>▶️ Projeter tout</button>
+          <button class="bouton danger" id="btn-effacer" disabled>🗑️ Tout effacer</button>
+        </div>
+      </div>
+      <div id="galerie" class="galerie" aria-live="polite"></div>
+      <div id="vide" class="vide">
+        <span class="gros">🕊️</span>
+        En attente des envois des élèves…<br>
+        Rien n'est stocké : tout disparaît quand on ferme cette page.
+      </div>
+    </section>
+  </main>
+
+  <div id="projection" class="projection" hidden role="dialog" aria-modal="true" aria-label="Projection">
+    <div class="scene" id="scene"></div>
+    <div class="commandes">
+      <button class="bouton" id="proj-prec">⬅️ Précédent</button>
+      <button class="bouton" id="proj-suiv">Suivant ➡️</button>
+      <button class="bouton" id="proj-fermer">✖️ Fermer (Échap)</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden role="status"></div>
+
+  <script src="vendor/peerjs-1.5.4.min.js"></script>
+  <script src="vendor/qrcode-generator-1.4.4.js"></script>
+  <script src="commun.js"></script>
+  <script src="ecran.js"></script>
+</body>
+</html>

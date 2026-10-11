@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TransfertActif — envoyer</title>
+  <meta name="description" content="Envoie une photo ou un fichier vers l'écran de la classe.">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="transfertactif.css">
+</head>
+<body>
+  <header class="entete">
+    <img src="logo.svg" alt="">
+    <div>
+      <h1>TransfertActif</h1>
+      <div class="sous-titre">Envoyer à l'écran de la classe</div>
+    </div>
+    <div class="droite"><span id="etat" class="pastille" role="status">⏳</span></div>
+  </header>
+
+  <main class="telephone">
+    <!-- 0. Code de la classe (si on n'est pas arrivé par le QR code) -->
+    <section class="carte etape" id="etape-code" hidden>
+      <div class="titre">
+        <span class="numero" aria-hidden="true">🔑</span>
+        <h2>Tape le code de l'écran</h2>
+        <button class="bouton ecouter" data-lire="Tape le code écrit sous le QR code, sur l'écran de la classe." aria-label="Écouter la consigne">🔊</button>
+      </div>
+      <input id="champ-code" class="champ-code" maxlength="5" autocomplete="off" autocapitalize="characters" inputmode="text" aria-label="Code de l'écran">
+      <button class="bouton principal gros-bouton" id="btn-code">Rejoindre</button>
+    </section>
+
+    <!-- 1. Choisir son animal -->
+    <section class="carte etape" id="etape-animal" hidden>
+      <div class="titre">
+        <span class="numero" aria-hidden="true">1</span>
+        <h2>Choisis ton animal</h2>
+        <button class="bouton ecouter" data-lire="Étape 1. Choisis ton animal. Ton prénom ne sera pas affiché." aria-label="Écouter la consigne">🔊</button>
+      </div>
+      <p class="aide" style="margin:0">Ton prénom ne s'affiche pas. Seulement ton animal.</p>
+      <div class="animaux" id="animaux"></div>
+    </section>
+
+    <!-- 2. Prendre / choisir -->
+    <section class="carte etape" id="etape-choisir" hidden>
+      <div class="titre">
+        <span class="numero" aria-hidden="true">2</span>
+        <h2>Prends une photo</h2>
+        <button class="bouton ecouter" data-lire="Étape 2. Prends une photo de ton travail. Attention : pas de visage et pas de nom sur la photo." aria-label="Écouter la consigne">🔊</button>
+      </div>
+      <div class="rappel"><span class="emoji" aria-hidden="true">🙈</span><span><strong>Pas de visage, pas de nom</strong> sur la photo.</span></div>
+      <label class="bouton principal gros-bouton" for="photo"><span class="emoji" aria-hidden="true">📷</span> Prendre une photo</label>
+      <input type="file" id="photo" accept="image/*" capture="environment" hidden>
+      <label class="bouton gros-bouton" for="fichier"><span class="emoji" aria-hidden="true">📁</span> Choisir un fichier</label>
+      <input type="file" id="fichier" hidden>
+      <button class="bouton" id="btn-changer-animal">Changer d'animal</button>
+    </section>
+
+    <!-- 3. Vérifier puis envoyer -->
+    <section class="carte etape" id="etape-envoyer" hidden>
+      <div class="titre">
+        <span class="numero" aria-hidden="true">3</span>
+        <h2>Vérifie et envoie</h2>
+        <button class="bouton ecouter" data-lire="Étape 3. Regarde bien ta photo. Si elle est bonne, appuie sur Envoyer. Sinon, appuie sur Recommencer." aria-label="Écouter la consigne">🔊</button>
+      </div>
+      <div class="apercu" id="apercu"></div>
+      <button class="bouton principal gros-bouton" id="btn-envoyer"><span class="emoji" aria-hidden="true">🕊️</span> Envoyer</button>
+      <button class="bouton gros-bouton" id="btn-recommencer"><span class="emoji" aria-hidden="true">↩️</span> Recommencer</button>
+    </section>
+
+    <!-- 4. Résultat -->
+    <section class="carte etape" id="etape-resultat" hidden>
+      <div class="resultat" id="resultat" role="status"></div>
+      <button class="bouton principal gros-bouton" id="btn-autre"><span class="emoji" aria-hidden="true">📷</span> Envoyer autre chose</button>
+    </section>
+
+    <!-- Documents distribués par l'enseignant -->
+    <section class="carte documents" id="documents" hidden>
+      <h2 style="margin:0 0 8px;font-size:1.1rem">📥 Documents de l'enseignant</h2>
+      <ul id="liste-documents"></ul>
+    </section>
+
+    <p class="aide">Ta photo va directement à l'écran de la classe, sans passer par un serveur. Elle n'est enregistrée nulle part.</p>
+  </main>
+
+  <script src="vendor/peerjs-1.5.4.min.js"></script>
+  <script src="commun.js"></script>
+  <script src="envoyer.js"></script>
+</body>
+</html>

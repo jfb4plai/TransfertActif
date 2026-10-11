@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="t">
+  <title id="t">TransfertActif — un pigeon voyageur qui porte une photo</title>
+  <!-- Fond : pastille jaune (couleurs de Liège : jaune et rouge) -->
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="#F6C343"/>
+  <!-- Trajet en pointillés -->
+  <path d="M14 96 C 30 112, 52 108, 64 92" fill="none" stroke="#1F2A44" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 7" opacity=".55"/>
+  <!-- Queue -->
+  <path d="M30 74 L12 66 L16 80 L10 90 L34 84 Z" fill="#1F2A44"/>
+  <!-- Corps -->
+  <path d="M28 80 C 30 60, 52 50, 74 52 C 86 53, 94 46, 98 40 C 104 42, 108 50, 104 58 C 98 74, 78 90, 52 90 C 40 90, 30 88, 28 80 Z" fill="#1F2A44"/>
+  <!-- Aile levée -->
+  <path d="M46 62 C 48 40, 62 24, 84 18 C 80 32, 76 44, 68 56 Z" fill="#33446B"/>
+  <path d="M52 60 C 56 46, 64 36, 76 30" fill="none" stroke="#F6C343" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+  <!-- Tête + reflet de cou -->
+  <circle cx="100" cy="42" r="11" fill="#1F2A44"/>
+  <path d="M92 50 C 96 54, 102 54, 106 50" fill="none" stroke="#3FA796" stroke-width="3" stroke-linecap="round"/>
+  <!-- Oeil -->
+  <circle cx="103" cy="39" r="2.6" fill="#fff"/>
+  <!-- Bec -->
+  <path d="M110 41 L120 44 L110 47 Z" fill="#E4572E"/>
+  <!-- Photo portée sous le corps -->
+  <g transform="rotate(-8 74 98)">
+    <rect x="58" y="84" width="34" height="26" rx="3" fill="#fff" stroke="#1F2A44" stroke-width="2.5"/>
+    <path d="M62 105 L71 95 L78 101 L83 96 L89 105 Z" fill="#C8102E"/>
+    <circle cx="84" cy="90" r="2.6" fill="#E4572E"/>
+  </g>
+  <!-- Patte qui tient la photo -->
+  <path d="M70 88 L72 84" stroke="#E4572E" stroke-width="3" stroke-linecap="round"/>
+</svg>
