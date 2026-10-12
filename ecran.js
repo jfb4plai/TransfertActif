@@ -27,11 +27,13 @@ function lienEnvoi(code) {
   return new URL('envoyer.html#' + code, location.href).href;
 }
 
+// Niveau de correction H (≈30 % récupérable) : le logo posé au centre n'empêche pas la lecture.
 function qrSvg(texte) {
-  const qr = qrcode(0, 'M');
+  const qr = qrcode(0, 'H');
   qr.addData(texte);
   qr.make();
-  return qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true });
+  return '<div class="qr-logo">' + qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true }) +
+    '<img src="logo-jfb4plai.png" alt=""></div>';
 }
 
 function majEtat(texte, classe) {
