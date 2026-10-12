@@ -26,6 +26,12 @@ const TRANSFERT = {
     return Array.from(octets, (o) => this.ALPHABET[o % this.ALPHABET.length]).join('');
   },
 
+  // crypto.randomUUID n'existe qu'à partir d'iOS 15.4 : les iPad d'école plus anciens en ont besoin.
+  uid() {
+    if (crypto.randomUUID) return crypto.randomUUID();
+    return Array.from(crypto.getRandomValues(new Uint8Array(16)), (o) => o.toString(16).padStart(2, '0')).join('');
+  },
+
   normaliserCode(saisie) {
     return (saisie || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   },
