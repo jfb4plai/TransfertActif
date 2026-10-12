@@ -115,7 +115,7 @@ function recevoir(conn, msg) {
     const mime = typeof msg.mime === 'string' ? msg.mime : 'application/octet-stream';
     const blob = new Blob([donnees], { type: mime });
     ajouterEnvoi({
-      id: crypto.randomUUID(),
+      id: TRANSFERT.uid(),
       nom: String(msg.nom || 'fichier').slice(0, 120),
       mime,
       taille,

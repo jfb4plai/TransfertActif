@@ -13,6 +13,8 @@ const etat = {
   pause: false,
   pret: null,       // { id, nom, mime, donnees, apercu }
   attente: null,    // { id, minuterie }
+  reconnexion: null, // { ok, ko } pendant une reconnexion automatique
+  flux: null,       // flux vidéo de l'appareil photo dans la page
 };
 
 function montrer(id) {
@@ -46,6 +48,7 @@ function rejoindre(code) {
   pair.on('open', connecterEcran);
   pair.on('error', (err) => {
     majEtat('🔴 Hors ligne', 'ko');
+    if (etat.reconnexion) { etat.reconnexion.ko(err); return; }
     afficherErreur(TRANSFERT.erreurLisible(err));
   });
 }
@@ -54,12 +57,19 @@ function connecterEcran() {
   const conn = etat.pair.connect(TRANSFERT.idPair(etat.code), { reliable: true, serialization: 'binary' });
   etat.conn = conn;
   const minuterie = setTimeout(() => {
-    if (!conn.open) afficherErreur(TRANSFERT.erreurLisible({ type: 'webrtc' }));
+    if (conn.open) return;
+    if (etat.reconnexion) etat.reconnexion.ko({ type: 'webrtc' });
+    else afficherErreur(TRANSFERT.erreurLisible({ type: 'webrtc' }));
   }, 15000);
 
   conn.on('open', () => {
     clearTimeout(minuterie);
     majEtat('🟢 Connecté', 'ok');
+    if (etat.reconnexion) { // reconnexion silencieuse : on reste à l'étape en cours
+      if (etat.animal) conn.send({ type: 'bonjour', animal: etat.animal });
+      etat.reconnexion.ok();
+      return;
+    }
     if (etat.animal) {
       conn.send({ type: 'bonjour', animal: etat.animal });
       if (!$('etape-code').hidden || !$('etape-animal').hidden || ETAPES.every((e) => $(e).hidden)) montrer('etape-choisir');
@@ -69,6 +79,22 @@ function connecterEcran() {
   });
   conn.on('data', recevoir);
   conn.on('close', () => majEtat('🟠 Déconnecté', 'ko'));
+}
+
+// Le téléphone coupe souvent la connexion quand l'élève quitte la page (appareil photo, verrouillage) :
+// on la rétablit sans perdre la photo préparée.
+function assurerConnexion() {
+  if (etat.conn && etat.conn.open) return Promise.resolve();
+  if (etat.reconnexion) return etat.reconnexion.promesse;
+  let ok, ko;
+  const promesse = new Promise((a, b) => { ok = a; ko = b; });
+  const fin = () => { clearTimeout(minuterie); etat.reconnexion = null; };
+  const minuterie = setTimeout(() => ko({ type: 'webrtc' }), 20000);
+  etat.reconnexion = { promesse, ok: () => { fin(); ok(); }, ko: (e) => { fin(); ko(e); } };
+  majEtat('⏳ Reconnexion…');
+  if (etat.pair && !etat.pair.destroyed && !etat.pair.disconnected) connecterEcran();
+  else rejoindre(etat.code);
+  return promesse;
 }
 
 function afficherErreur(texte) {
@@ -123,24 +149,53 @@ function dessinerAnimaux() {
 // ---------- Étape 2 : préparer le fichier ----------
 
 // Ré-encode la photo : allège l'envoi ET supprime les métadonnées EXIF (dont la position GPS).
-async function preparerImage(fichier) {
-  const bitmap = await createImageBitmap(fichier);
-  const echelle = Math.min(1, COTE_MAX / Math.max(bitmap.width, bitmap.height));
+// createImageBitmap n'accepte un fichier qu'à partir de Safari 15 : repli sur un élément <img>.
+async function decoder(fichier) {
+  if (window.createImageBitmap) {
+    try { return await createImageBitmap(fichier); } catch (_) { /* repli ci-dessous */ }
+  }
+  return new Promise((ok, ko) => {
+    const url = URL.createObjectURL(fichier);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); ok(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); ko(new Error('décodage')); };
+    img.src = url;
+  });
+}
+
+// Dessine une source (image, vidéo) réduite à COTE_MAX et l'encode en JPEG.
+function versJpeg(source, largeur, hauteur) {
+  const echelle = Math.min(1, COTE_MAX / Math.max(largeur, hauteur));
   const canvas = document.createElement('canvas');
-  canvas.width = Math.round(bitmap.width * echelle);
-  canvas.height = Math.round(bitmap.height * echelle);
-  canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close && bitmap.close();
-  const blob = await new Promise((ok) => canvas.toBlob(ok, 'image/jpeg', 0.85));
-  if (!blob) throw new Error('encodage');
+  canvas.width = Math.round(largeur * echelle);
+  canvas.height = Math.round(hauteur * echelle);
+  canvas.getContext('2d').drawImage(source, 0, 0, canvas.width, canvas.height);
+  return new Promise((ok, ko) => canvas.toBlob((b) => (b ? ok(b) : ko(new Error('encodage'))), 'image/jpeg', 0.85));
+}
+
+async function preparerImage(fichier) {
+  const image = await decoder(fichier);
+  const blob = await versJpeg(image, image.naturalWidth || image.width, image.naturalHeight || image.height);
+  if (image.close) image.close();
   return blob;
 }
 
-async function preparer(fichier) {
+async function preparer(fichier, dejaPret) {
   if (!fichier) return;
+  $('preparation').hidden = false;
+  try {
+    await preparerFichier(fichier, dejaPret);
+  } catch (_) {
+    resultat('😕', 'La photo n\'a pas pu être préparée. Réessaie, ou choisis-la avec « Choisir une photo ou un fichier ».', 'La photo n\'a pas pu être préparée. Réessaie.');
+  } finally {
+    $('preparation').hidden = true;
+  }
+}
+
+async function preparerFichier(fichier, dejaPret) {
   let blob = fichier;
   let nom = fichier.name || 'photo.jpg';
-  const recodable = /^image\/(jpeg|png|webp|heic|heif)$/.test(fichier.type) || (!fichier.type && /\.(jpe?g|png|heic)$/i.test(nom));
+  const recodable = !dejaPret && (/^image\/(jpeg|png|webp|heic|heif)$/.test(fichier.type) || (!fichier.type && /\.(jpe?g|png|heic)$/i.test(nom)));
   if (recodable) {
     try {
       blob = await preparerImage(fichier);
@@ -153,7 +208,7 @@ async function preparer(fichier) {
   }
   if (etat.pret) URL.revokeObjectURL(etat.pret.apercu);
   etat.pret = {
-    id: crypto.randomUUID(),
+    id: TRANSFERT.uid(),
     nom,
     mime: blob.type || 'application/octet-stream',
     donnees: await blob.arrayBuffer(),
@@ -179,14 +234,19 @@ async function preparer(fichier) {
 
 // ---------- Étape 3 : envoyer ----------
 
-function envoyer() {
+async function envoyer() {
   const p = etat.pret;
   if (!p) return;
-  if (!etat.conn || !etat.conn.open) {
-    resultat('🔌', 'La connexion avec l\'écran est coupée. Rescanne le QR code.', 'La connexion est coupée.');
-    return;
-  }
   $('btn-envoyer').disabled = true;
+  if (!etat.conn || !etat.conn.open) {
+    $('btn-envoyer').innerHTML = '<span class="emoji" aria-hidden="true">⏳</span> Reconnexion…';
+    try {
+      await assurerConnexion();
+    } catch (_) {
+      resultat('🔌', 'Impossible de rejoindre l\'écran. Vérifie que l\'écran de la classe est toujours ouvert, puis rescanne le QR code.', 'Impossible de rejoindre l\'écran.');
+      return;
+    }
+  }
   $('btn-envoyer').innerHTML = '<span class="emoji" aria-hidden="true">⏳</span> Envoi en cours…';
   etat.conn.send({ type: 'fichier', id: p.id, nom: p.nom, mime: p.mime, donnees: p.donnees, animal: etat.animal });
   etat.attente = {
@@ -207,6 +267,60 @@ function resultat(emoji, texte, aLire) {
   $('btn-autre').onclick = () => montrer('etape-choisir');
   montrer('etape-resultat');
   if (aLire) TRANSFERT.parler(aLire);
+}
+
+// ---------- Appareil photo dans la page ----------
+// L'élève ne quitte pas la page : la connexion avec l'écran n'est pas coupée
+// et Android ne risque pas de fermer l'onglet pendant la prise de vue.
+
+async function ouvrirCamera() {
+  const md = navigator.mediaDevices;
+  if (!md || !md.getUserMedia) { basculerCameraNative(); $('photo').click(); return; }
+  try {
+    etat.flux = await md.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+      audio: false,
+    });
+  } catch (_) {
+    // Refus d'accès ou caméra indisponible : on propose l'appareil photo du téléphone.
+    basculerCameraNative();
+    resultat('📷', 'La caméra n\'est pas accessible dans la page. Appuie sur « Ouvrir l\'appareil photo ».', 'Appuie sur Ouvrir l\'appareil photo.');
+    $('btn-autre').innerHTML = '<span class="emoji" aria-hidden="true">↩️</span> Revenir';
+    return;
+  }
+  const video = $('video');
+  video.srcObject = etat.flux;
+  $('camera').hidden = false;
+  try { await video.play(); } catch (_) { /* autoplay muet : la lecture démarre seule */ }
+  $('btn-declencher').focus();
+}
+
+function fermerCamera() {
+  if (etat.flux) etat.flux.getTracks().forEach((t) => t.stop());
+  etat.flux = null;
+  $('video').srcObject = null;
+  $('camera').hidden = true;
+}
+
+async function declencher() {
+  const video = $('video');
+  if (!video.videoWidth) return; // image pas encore prête
+  let blob;
+  try {
+    blob = await versJpeg(video, video.videoWidth, video.videoHeight);
+  } catch (_) {
+    fermerCamera();
+    resultat('😕', 'La photo n\'a pas pu être prise. Réessaie.', 'La photo n\'a pas pu être prise.');
+    return;
+  }
+  fermerCamera();
+  blob.name = 'photo.jpg';
+  preparer(blob, true);
+}
+
+function basculerCameraNative() {
+  $('btn-camera').hidden = true;
+  $('btn-camera-native').hidden = false;
 }
 
 // ---------- Documents distribués par l'enseignant ----------
@@ -237,12 +351,22 @@ $('btn-code').onclick = () => {
   demarrer();
 };
 $('champ-code').addEventListener('keydown', (ev) => { if (ev.key === 'Enter') $('btn-code').click(); });
+$('btn-camera').onclick = ouvrirCamera;
+$('btn-declencher').onclick = declencher;
+$('btn-camera-annuler').onclick = fermerCamera;
 $('photo').onchange = (ev) => { preparer(ev.target.files[0]); ev.target.value = ''; };
 $('fichier').onchange = (ev) => { preparer(ev.target.files[0]); ev.target.value = ''; };
 $('btn-envoyer').onclick = envoyer;
 $('btn-recommencer').onclick = () => montrer('etape-choisir');
 $('btn-changer-animal').onclick = () => { dessinerAnimaux(); montrer('etape-animal'); };
 $('btn-autre').onclick = () => montrer('etape-choisir');
+
+// Retour sur la page (après l'appareil photo du téléphone, un verrouillage…) : on vérifie la connexion.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !etat.code || !$('etape-code').hidden) return;
+  if (etat.conn && etat.conn.open) return;
+  assurerConnexion().catch(() => majEtat('🔴 Hors ligne', 'ko'));
+});
 
 function demarrer() {
   const code = TRANSFERT.normaliserCode(location.hash.slice(1));
