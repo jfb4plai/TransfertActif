@@ -135,6 +135,127 @@ function validerAnimal(a) {
   return TRANSFERT.ANIMAUX.find(([e, n]) => e === a[0] && n === a[1]) || null;
 }
 
+// ---------- Téléchargement sur l'ordinateur ----------
+
+// Nom de fichier unique et lisible : « Renard_10h42_photo.jpg ». Les photos de téléphone s'appellent
+// toutes « photo.jpg » : sans préfixe, elles s'écraseraient. Un rang est ajouté en cas de doublon.
+function nomTelechargement(e, rang) {
+  const propre = (s) => s.replace(/[\\/:*?"<>|\u0000-\u001f]/g, '_').trim();
+  const h = e.heure.getHours() + 'h' + String(e.heure.getMinutes()).padStart(2, '0');
+  const base = propre(e.animal[1]) + '_' + h + '_' + propre(e.nom);
+  if (!rang) return base;
+  const point = base.lastIndexOf('.');
+  return point > 0 ? base.slice(0, point) + '_' + rang + base.slice(point) : base + '_' + rang;
+}
+
+function nomsUniques() {
+  const vus = new Map();
+  return etat.envois.map((e) => {
+    const base = nomTelechargement(e, 0);
+    const n = (vus.get(base) || 0) + 1;
+    vus.set(base, n);
+    return n === 1 ? base : nomTelechargement(e, n);
+  });
+}
+
+function enregistrer(blob, nom) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nom;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+const TABLE_CRC = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+
+function crc32(octets) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < octets.length; i++) c = TABLE_CRC[(c ^ octets[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+
+// ZIP sans compression (« stored ») : photos et PDF sont déjà compressés, le gain serait nul.
+// Noms en UTF-8 (bit 11) pour conserver les accents. Limite : 4 Go, très au-dessus de 25 Mo × élèves.
+function creerZip(fichiers) { // [{ nom, octets: Uint8Array }]
+  const enc = new TextEncoder();
+  const parts = [];
+  const central = [];
+  let decalage = 0;
+  const d = new Date();
+  const heureDos = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+  const dateDos = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+
+  fichiers.forEach(({ nom, octets }) => {
+    const n = enc.encode(nom);
+    const crc = crc32(octets);
+    const loc = new DataView(new ArrayBuffer(30));
+    loc.setUint32(0, 0x04034b50, true);
+    loc.setUint16(4, 20, true);
+    loc.setUint16(6, 0x0800, true);
+    loc.setUint16(8, 0, true);
+    loc.setUint16(10, heureDos, true);
+    loc.setUint16(12, dateDos, true);
+    loc.setUint32(14, crc, true);
+    loc.setUint32(18, octets.length, true);
+    loc.setUint32(22, octets.length, true);
+    loc.setUint16(26, n.length, true);
+    parts.push(loc.buffer, n, octets);
+
+    const cen = new DataView(new ArrayBuffer(46));
+    cen.setUint32(0, 0x02014b50, true);
+    cen.setUint16(4, 20, true);
+    cen.setUint16(6, 20, true);
+    cen.setUint16(8, 0x0800, true);
+    cen.setUint16(12, heureDos, true);
+    cen.setUint16(14, dateDos, true);
+    cen.setUint32(16, crc, true);
+    cen.setUint32(20, octets.length, true);
+    cen.setUint32(24, octets.length, true);
+    cen.setUint16(28, n.length, true);
+    cen.setUint32(42, decalage, true);
+    central.push(cen.buffer, n);
+    decalage += 30 + n.length + octets.length;
+  });
+
+  const tailleCentral = central.reduce((s, p) => s + (p.byteLength !== undefined ? p.byteLength : p.length), 0);
+  const fin = new DataView(new ArrayBuffer(22));
+  fin.setUint32(0, 0x06054b50, true);
+  fin.setUint16(8, fichiers.length, true);
+  fin.setUint16(10, fichiers.length, true);
+  fin.setUint32(12, tailleCentral, true);
+  fin.setUint32(16, decalage, true);
+  return new Blob([...parts, ...central, fin.buffer], { type: 'application/zip' });
+}
+
+async function toutTelecharger() {
+  if (!etat.envois.length) return;
+  const noms = nomsUniques();
+  if (etat.envois.length === 1) { // un seul envoi : pas besoin d'archive
+    const e = etat.envois[0];
+    enregistrer(await (await fetch(e.url)).blob(), noms[0]);
+    return;
+  }
+  const fichiers = await Promise.all(etat.envois.map(async (e, i) => ({
+    nom: noms[i],
+    octets: new Uint8Array(await (await fetch(e.url)).arrayBuffer()),
+  })));
+  const j = new Date();
+  const jour = j.getFullYear() + '-' + String(j.getMonth() + 1).padStart(2, '0') + '-' + String(j.getDate()).padStart(2, '0');
+  enregistrer(creerZip(fichiers), 'TransfertActif_' + jour + '.zip');
+  toast('💾 ' + fichiers.length + ' fichiers enregistrés dans le dossier Téléchargements.');
+}
+
 // ---------- Galerie ----------
 
 function estImage(e) { return e.mime.startsWith('image/'); }
@@ -198,9 +319,9 @@ function dessinerGalerie() {
     const telecharger = document.createElement('a');
     telecharger.className = 'bouton';
     telecharger.href = e.url;
-    telecharger.download = e.nom;
-    telecharger.textContent = '💾';
-    telecharger.title = 'Enregistrer sur cet ordinateur';
+    telecharger.download = nomsUniques()[index];
+    telecharger.textContent = '💾 Enregistrer';
+    telecharger.title = 'Enregistrer ce fichier sur cet ordinateur (dossier Téléchargements)';
     const retirer = document.createElement('button');
     retirer.className = 'bouton danger';
     retirer.textContent = '✖️';
@@ -217,6 +338,7 @@ function dessinerGalerie() {
   $('compteur').textContent = n ? '(' + n + ')' : '';
   $('btn-diaporama').disabled = n === 0;
   $('btn-effacer').disabled = n === 0;
+  $('btn-telecharger').disabled = n === 0;
   $('btn-comparer').disabled = etat.choisis.length !== 2;
   $('btn-comparer').textContent = '⚖️ Comparer (' + etat.choisis.length + '/2)';
 }
@@ -349,6 +471,13 @@ $('btn-qr-grand').onclick = () => ouvrirProjection({ mode: 'qr' });
 $('btn-diaporama').onclick = () => ouvrirProjection({ mode: 'un', index: 0 });
 $('btn-comparer').onclick = () => ouvrirProjection({ mode: 'duo', ids: [...etat.choisis] });
 $('btn-effacer').onclick = toutEffacer;
+$('btn-telecharger').onclick = toutTelecharger;
+$('proj-telecharger').onclick = () => {
+  const p = etat.projection;
+  if (!p || p.mode !== 'un') return;
+  const e = etat.envois[p.index];
+  if (e) fetch(e.url).then((r) => r.blob()).then((b) => enregistrer(b, nomsUniques()[p.index]));
+};
 $('proj-prec').onclick = () => naviguer(-1);
 $('proj-suiv').onclick = () => naviguer(1);
 $('proj-fermer').onclick = fermerProjection;
