@@ -370,7 +370,7 @@ function dessinerGalerie() {
 
     const infos = document.createElement('div');
     infos.className = 'infos';
-    infos.innerHTML = '<span aria-hidden="true"></span><span class="qui"></span><span class="quand"></span>';
+    infos.innerHTML = '<span class="pic" aria-hidden="true"></span><span class="qui"></span><span class="quand"></span>';
     infos.children[0].textContent = e.animal[0];
     infos.children[1].textContent = e.animal[1];
     infos.children[2].textContent = heure(e.heure) + ' · ' + TRANSFERT.taille(e.taille);
@@ -475,7 +475,7 @@ function figure(e) {
   }
   const legende = document.createElement('figcaption');
   legende.className = 'legende';
-  legende.innerHTML = '<span></span> <span class="qui"></span> <span class="nom"></span>';
+  legende.innerHTML = '<span class="pic"></span> <span class="qui"></span> <span class="nom"></span>';
   legende.children[0].textContent = e.animal[0];
   legende.children[1].textContent = e.animal[1];
   legende.children[2].textContent = estImage(e) ? '' : '— ' + e.nom;

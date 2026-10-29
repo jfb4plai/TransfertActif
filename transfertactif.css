@@ -170,7 +170,9 @@ button, input, select { font: inherit; color: inherit; }
 .envoi .infos .quand { margin-left: auto; color: var(--texte-doux); font-size: .8rem; }
 .envoi .actions { display: flex; gap: 4px; padding: 0 8px 8px; }
 .envoi .actions .bouton { min-height: 36px; padding: 4px 8px; font-size: .85rem; flex: 1; }
-.masquer-pseudos .envoi .qui, .masquer-pseudos .projection .legende .qui { visibility: hidden; }
+/* « Masquer » cache le pictogramme de l'animal et le nom (ou le code) : sinon l'animal reste reconnaissable. */
+.masquer-pseudos .envoi .infos .pic, .masquer-pseudos .envoi .qui,
+.masquer-pseudos .projection .legende .pic, .masquer-pseudos .projection .legende .qui { visibility: hidden; }
 
 /* Projection plein écran */
 .projection {
