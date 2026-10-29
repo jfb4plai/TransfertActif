@@ -44,6 +44,7 @@ TransfertActif est une adaptation PLAI de [Roucoule](https://roucoule.forge.apps
 |---|---|
 | `index.html` + `ecran.js` | Écran de classe : QR code, galerie, projection, comparaison, distribution |
 | `envoyer.html` + `envoyer.js` | Parcours élève sur téléphone |
+| `guide.html` | Mode d'emploi enseignant, ouvert depuis le bouton « 📖 Mode d'emploi » de l'écran |
 | `commun.js` | Constantes, pseudonymes, synthèse vocale, messages d'erreur |
 | `transfertactif.css` | Styles (mode clair/sombre, cibles tactiles ≥ 44 px) |
 | `logo.svg` | Logo : pigeon voyageur portant une photo, jaune et rouge de Liège |

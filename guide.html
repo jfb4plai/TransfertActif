@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TransfertActif — mode d'emploi</title>
+  <meta name="description" content="Mode d'emploi de TransfertActif pour l'enseignant : ouvrir l'écran, identifier les élèves, recevoir, projeter, télécharger, distribuer un document.">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="transfertactif.css">
+  <style>
+    .guide { max-width: 820px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+    .guide h2 { margin: 0 0 8px; font-size: 1.25rem; }
+    .guide h3 { margin: 16px 0 4px; font-size: 1.05rem; }
+    .guide p, .guide li { margin: 0 0 8px; }
+    .guide ol, .guide ul { margin: 0 0 8px; padding-left: 24px; }
+    .guide .sommaire { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+    .guide .sommaire a { display: inline-block; padding: 10px 14px; min-height: 44px; border: 1px solid var(--bord); border-radius: 999px; background: var(--surface-2); color: var(--texte); text-decoration: none; }
+    .guide a { color: var(--texte); }
+    .guide .limite { border-left: 6px solid var(--rouge); padding-left: 12px; }
+    .guide .retour { align-self: flex-start; }
+    .guide kbd, .guide .btn-nom { display: inline-block; padding: 2px 8px; border: 1px solid var(--bord); border-radius: 8px; background: var(--surface-2); font-size: .95em; }
+  </style>
+</head>
+<body>
+  <header class="entete">
+    <img src="logo.svg" alt="">
+    <div>
+      <h1>TransfertActif</h1>
+      <div class="sous-titre">Mode d'emploi pour l'enseignant</div>
+    </div>
+    <div class="droite"><a class="bouton" href="index.html">← Retour à l'écran</a></div>
+  </header>
+
+  <main class="guide">
+    <section class="carte">
+      <h2>En 30 secondes</h2>
+      <p>L'écran de classe affiche un QR code. Les élèves le scannent avec leur téléphone, prennent une photo de leur travail et l'envoient. Les envois s'affichent en galerie sur l'écran. Aucun compte, aucune installation, aucun fichier stocké sur un serveur.</p>
+      <ul class="sommaire">
+        <li><a href="#avant">Avant la séance</a></li>
+        <li><a href="#identifier">Identifier les élèves</a></li>
+        <li><a href="#eleves">Ce que font les élèves</a></li>
+        <li><a href="#mur">Le mur : projeter et comparer</a></li>
+        <li><a href="#telecharger">Télécharger</a></li>
+        <li><a href="#smartphone">Mon smartphone</a></li>
+        <li><a href="#distribuer">Distribuer un document</a></li>
+        <li><a href="#masquer">Masquer</a></li>
+        <li><a href="#pause">Pause</a></li>
+        <li><a href="#limites">Limites</a></li>
+      </ul>
+    </section>
+
+    <section class="carte" id="avant">
+      <h2>Avant la séance</h2>
+      <ol>
+        <li>Ouvrir la page TransfertActif sur l'ordinateur relié au projecteur ou au TBI.</li>
+        <li>Attendre que la pastille en haut à droite affiche « Prêt ». Un code de 5 caractères et un QR code apparaissent.</li>
+        <li>Cliquer sur <span class="btn-nom">🔍 QR code en grand</span> pour projeter le QR code à la taille du tableau.</li>
+      </ol>
+      <p>Le code change à chaque ouverture de la page. Les élèves dont la caméra ne scanne pas le QR code peuvent ouvrir la page d'envoi et taper ce code de 5 caractères.</p>
+      <p>La pastille <span class="btn-nom">📱 N</span> indique le nombre de téléphones connectés.</p>
+    </section>
+
+    <section class="carte" id="identifier">
+      <h2>Identifier les élèves : animal ou code</h2>
+      <p>Chaque envoi s'affiche avec un pseudo, jamais avec un prénom. Choisir le mode <strong>avant</strong> de projeter le QR code :</p>
+      <ul>
+        <li><span class="btn-nom">🦊 Animal</span> : l'élève choisit parmi 30 animaux. Convient au fondamental.</li>
+        <li><span class="btn-nom">🔖 Code</span> : l'élève tape le code que tu lui as donné (exemple : E07, 8 caractères au plus, lettres sans accent, chiffres ou tiret). Convient au secondaire, et au fondamental si tu préfères.</li>
+      </ul>
+      <h3>Un animal ou un code pris n'est plus disponible</h3>
+      <p>Quand un élève a choisi « Renard », les autres élèves ne peuvent plus le choisir : le bouton est grisé. Pour un code déjà pris, la saisie est refusée avec un message.</p>
+      <p>L'identité se libère quand le téléphone ne donne plus signe de vie pendant environ 30 secondes (page fermée, téléphone verrouillé).</p>
+      <h3>Autoriser les doublons</h3>
+      <p>Cocher <span class="btn-nom">Autoriser les doublons</span> pour un travail à deux : les deux élèves peuvent alors porter le même animal ou le même code. La case agit tout de suite sur tous les téléphones.</p>
+      <p>Si tu décoches la case alors que deux élèves portent déjà la même identité, l'un des deux sera refusé s'il recharge sa page. Il devra en choisir une autre.</p>
+    </section>
+
+    <section class="carte" id="eleves">
+      <h2>Ce que font les élèves</h2>
+      <p>À donner à l'oral ou à écrire au tableau :</p>
+      <ol>
+        <li>Scanner le QR code avec l'appareil photo du téléphone.</li>
+        <li>Choisir son animal, ou taper son code.</li>
+        <li>Appuyer sur « Prendre une photo ».</li>
+        <li>Vérifier la photo : ni visage, ni nom.</li>
+        <li>Appuyer sur « Envoyer ».</li>
+        <li>Attendre le ✅ de confirmation.</li>
+      </ol>
+      <p>Chaque consigne du parcours élève se lit à voix haute avec le bouton 🔊. La synthèse vocale est celle du navigateur du téléphone : rien ne part vers un service externe.</p>
+      <p>Avant l'envoi, la photo est réduite (2000 pixels au plus) et ré-encodée en JPEG. Ce traitement supprime les métadonnées de la photo, dont la position GPS du téléphone.</p>
+    </section>
+
+    <section class="carte" id="mur">
+      <h2>Le mur : projeter et comparer</h2>
+      <p>Les envois arrivent en galerie, le dernier est mis en évidence. Sur chaque envoi :</p>
+      <ul>
+        <li><span class="btn-nom">⚖️ Choisir</span> : sélectionner l'envoi pour la comparaison.</li>
+        <li><span class="btn-nom">💾</span> : enregistrer cet envoi sur l'ordinateur.</li>
+        <li><span class="btn-nom">✖️</span> : retirer cet envoi de l'écran (une photo qui montre un visage, par exemple).</li>
+      </ul>
+      <h3>Comparer deux productions côte à côte</h3>
+      <ol>
+        <li>Cliquer sur « Choisir » sur deux envois. Le bouton « Comparer (2/2) » devient actif.</li>
+        <li>Cliquer sur <span class="btn-nom">⚖️ Comparer</span>.</li>
+      </ol>
+      <p>Si tu choisis un troisième envoi, le plus ancien choix est remplacé. Exemple d'usage : comparer deux dressages d'assiette, deux coupes ou deux schémas pour une mise en commun.</p>
+      <h3>Projeter tout</h3>
+      <p><span class="btn-nom">▶️ Projeter tout</span> affiche les envois un par un en plein écran. Naviguer avec les flèches ← et → du clavier, fermer avec Échap.</p>
+    </section>
+
+    <section class="carte" id="telecharger">
+      <h2>Télécharger les envois sur l'ordinateur</h2>
+      <p>Les envois n'existent que dans la mémoire de la page. <strong>Sans téléchargement, ils disparaissent à la fermeture de la page.</strong></p>
+      <ul>
+        <li><span class="btn-nom">💾 Tout télécharger</span> : une archive .zip avec tous les envois (un fichier seul s'il n'y en a qu'un).</li>
+        <li>Pour une partie seulement : cocher la case sur chaque envoi voulu (ou <span class="btn-nom">☑️ Tout cocher</span>). Le bouton devient « Télécharger la sélection (N) ».</li>
+        <li><span class="btn-nom">💾</span> sur un envoi, ou « Enregistrer » en projection : un seul fichier.</li>
+      </ul>
+      <p>Les fichiers s'appellent par exemple <kbd>Renard_10h42_photo.jpg</kbd> ou <kbd>E07_10h42_photo.jpg</kbd> : le pseudo et l'heure évitent que les photos de téléphone, toutes nommées « photo.jpg », s'écrasent. Un rang est ajouté en cas de doublon.</p>
+      <p>Le fichier arrive dans le dossier Téléchargements de l'ordinateur, selon le réglage du navigateur.</p>
+    </section>
+
+    <section class="carte" id="smartphone">
+      <h2>Envoyer les productions avec mon smartphone</h2>
+      <p>Cas d'usage : tu photographies toi-même les cahiers ou les feuilles des élèves.</p>
+      <ol>
+        <li>Cliquer sur <span class="btn-nom">📱 QR pour mon smartphone (enseignant)</span> et scanner ce QR code avec ton téléphone. Ce lien est différent de celui des élèves.</li>
+        <li>Choisir l'identité de l'élève : animal ou code, au choix à chaque fois.</li>
+        <li>Photographier la production et l'envoyer.</li>
+        <li>Choisir ensuite « Même élève : autre page » (plusieurs pages du même élève) ou « Élève suivant » (l'identité est alors oubliée, pour ne jamais attribuer un envoi au mauvais élève).</li>
+      </ol>
+      <p>Ton smartphone n'est jamais bloqué par une identité déjà prise, et il n'en bloque aucune pour les élèves.</p>
+    </section>
+
+    <section class="carte" id="distribuer">
+      <h2>Distribuer un document aux élèves</h2>
+      <p>C'est le sens inverse : de ton ordinateur vers les téléphones des élèves. Exemples : une fiche procédure, une consigne, un modèle de tableau.</p>
+      <ol>
+        <li>Attendre que les élèves soient connectés (la pastille 📱 indique combien).</li>
+        <li>Cliquer sur <span class="btn-nom">📤 Distribuer un document</span> et choisir le fichier.</li>
+        <li>Lire la confirmation : « envoyé à N téléphone(s) ».</li>
+      </ol>
+      <p>Sur chaque téléphone apparaît une carte « Documents de l'enseignant » avec un lien de téléchargement, et la phrase « L'enseignant t'a envoyé un document » est lue à voix haute.</p>
+      <p class="limite"><strong>À savoir :</strong> le document part à tous les téléphones connectés à ce moment-là, sans choix possible d'un seul élève. Un élève qui se connecte après l'envoi ne le reçoit pas : cliquer à nouveau sur « Distribuer ». Taille maximale : 25 Mo.</p>
+    </section>
+
+    <section class="carte" id="masquer">
+      <h2>Masquer les pseudos</h2>
+      <p><span class="btn-nom">🙈 Masquer</span> cache l'animal ou le code affiché sous chaque production, dans la galerie et dans la projection. Un second clic les ré-affiche.</p>
+      <p>Quand l'utiliser : avant de projeter le mur, pour commenter les productions sans désigner leur auteur.</p>
+      <p class="limite"><strong>À savoir :</strong> « Masquer » ne change que l'affichage. Les fichiers téléchargés gardent le pseudo dans leur nom.</p>
+    </section>
+
+    <section class="carte" id="pause">
+      <h2>Pause</h2>
+      <p><span class="btn-nom">⏸️ Pause</span> bloque les nouveaux envois sans fermer la page. Les élèves voient « Envois en pause ». Cliquer sur « Reprendre » pour rouvrir. Utile pour reprendre la main sur la classe.</p>
+    </section>
+
+    <section class="carte" id="limites">
+      <h2>Limites à connaître</h2>
+      <ul>
+        <li><strong>Rien n'est stocké.</strong> Fermer la page efface tous les envois. Télécharger avant de partir.</li>
+        <li><strong>Pas d'authentification.</strong> Quiconque voit le QR code peut envoyer. En cas d'envoi indésirable : « Pause », puis ✖️ sur l'envoi.</li>
+        <li><strong>25 Mo par fichier</strong>, dans les deux sens.</li>
+        <li><strong>Réseau d'école filtré.</strong> La connexion est directe entre les téléphones et l'ordinateur, sans serveur relais. Sur un réseau très filtré, elle peut échouer : le téléphone de l'élève passé en 4G contourne le problème.</li>
+        <li><strong>Pas encore testé</strong> sur un large parc de téléphones réels ni sur le réseau d'une école. Faire un essai de deux minutes avec deux élèves avant la première séance.</li>
+        <li><strong>Visages et noms.</strong> L'app rappelle « pas de visage, pas de nom » avant chaque photo, mais ne contrôle pas le contenu. Le bouton ✖️ permet de retirer un envoi.</li>
+      </ul>
+    </section>
+
+    <section class="carte">
+      <h2>Contact</h2>
+      <p>Question, problème ou suggestion : <a href="mailto:jeanfrancois.beguin@ens.ecl.be">jeanfrancois.beguin@ens.ecl.be</a></p>
+    </section>
+
+    <a class="bouton principal retour" href="index.html">← Retour à l'écran de classe</a>
+  </main>
+</body>
+</html>
