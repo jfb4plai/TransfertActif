@@ -17,7 +17,7 @@ TransfertActif est une adaptation PLAI de [Roucoule](https://roucoule.forge.apps
 | **Rappel « pas de visage, pas de nom »** avant chaque photo | Réflexe RGPD et droit à l'image, intégré au geste. |
 | **Photo nettoyée avant envoi** : redimensionnée (2000 px max) et ré-encodée en JPEG | Envoi plus rapide **et suppression des métadonnées EXIF**, dont la position GPS du téléphone. |
 | **Distribuer un document** de l'écran vers tous les téléphones connectés | Sens inverse : l'enseignant envoie la fiche procédure, la consigne ou le modèle sur le téléphone de chaque élève. |
-| **Téléchargement sur l'ordinateur** : « 💾 Tout télécharger » (archive .zip, ou fichier seul s'il n'y en a qu'un) et « 💾 Enregistrer » par envoi, y compris en projection. Noms `Renard_10h42_photo.jpg`, rang ajouté en cas de doublon | Les envois ne vivent qu'en mémoire : sans téléchargement, ils disparaissent à la fermeture. Les photos de téléphone s'appellent toutes `photo.jpg`, le préfixe évite qu'elles s'écrasent. |
+| **Téléchargement sur l'ordinateur** : « 💾 Tout télécharger » (archive .zip, ou fichier seul s'il n'y en a qu'un) ; une case à cocher par envoi (et « Tout cocher ») transforme le bouton en « Télécharger la sélection » ; « 💾 Enregistrer » par envoi, y compris en projection. Noms `Renard_10h42_photo.jpg`, rang ajouté en cas de doublon | Les envois ne vivent qu'en mémoire : sans téléchargement, ils disparaissent à la fermeture. Les photos de téléphone s'appellent toutes `photo.jpg`, le préfixe évite qu'elles s'écrasent. |
 | **Pause des envois** | Reprendre la main sur la classe sans fermer la page. |
 
 ## Fonctionnement technique

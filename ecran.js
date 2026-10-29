@@ -10,6 +10,7 @@ const etat = {
   connexions: new Map(), // id connexion -> { conn, animal }
   envois: [],            // { id, nom, mime, taille, url, animal, heure }
   choisis: [],           // ids sélectionnés pour la comparaison
+  coches: [],            // ids cochés pour le téléchargement (indépendant de la comparaison)
   pause: false,
   projection: null,      // { mode: 'qr' } | { mode: 'un', index } | { mode: 'duo', ids }
   dernier: null,         // id du dernier envoi, seul à être animé à son arrivée
@@ -238,22 +239,37 @@ function creerZip(fichiers) { // [{ nom, octets: Uint8Array }]
   return new Blob([...parts, ...central, fin.buffer], { type: 'application/zip' });
 }
 
-async function toutTelecharger() {
+// Télécharge les envois cochés ; si aucun n'est coché, tous les envois.
+async function telecharger() {
   if (!etat.envois.length) return;
-  const noms = nomsUniques();
-  if (etat.envois.length === 1) { // un seul envoi : pas besoin d'archive
-    const e = etat.envois[0];
-    enregistrer(await (await fetch(e.url)).blob(), noms[0]);
+  const noms = nomsUniques(); // calculés sur tous les envois : un nom ne change pas selon la sélection
+  const retenus = etat.envois
+    .map((e, i) => ({ e, nom: noms[i] }))
+    .filter(({ e }) => !etat.coches.length || etat.coches.includes(e.id));
+  if (retenus.length === 1) { // un seul fichier : pas besoin d'archive
+    enregistrer(await (await fetch(retenus[0].e.url)).blob(), retenus[0].nom);
     return;
   }
-  const fichiers = await Promise.all(etat.envois.map(async (e, i) => ({
-    nom: noms[i],
+  const fichiers = await Promise.all(retenus.map(async ({ e, nom }) => ({
+    nom,
     octets: new Uint8Array(await (await fetch(e.url)).arrayBuffer()),
   })));
   const j = new Date();
   const jour = j.getFullYear() + '-' + String(j.getMonth() + 1).padStart(2, '0') + '-' + String(j.getDate()).padStart(2, '0');
   enregistrer(creerZip(fichiers), 'TransfertActif_' + jour + '.zip');
   toast('💾 ' + fichiers.length + ' fichiers enregistrés dans le dossier Téléchargements.');
+}
+
+function basculerCoche(id) {
+  const i = etat.coches.indexOf(id);
+  if (i >= 0) etat.coches.splice(i, 1);
+  else etat.coches.push(id);
+  dessinerGalerie();
+}
+
+function toutCocher() {
+  etat.coches = etat.coches.length === etat.envois.length ? [] : etat.envois.map((e) => e.id);
+  dessinerGalerie();
 }
 
 // ---------- Galerie ----------
@@ -308,6 +324,16 @@ function dessinerGalerie() {
     infos.children[1].textContent = e.animal[1];
     infos.children[2].textContent = heure(e.heure) + ' · ' + TRANSFERT.taille(e.taille);
     infos.title = e.nom;
+    const coche = document.createElement('label');
+    coche.className = 'coche';
+    coche.title = 'Cocher pour télécharger seulement les envois cochés';
+    const case_ = document.createElement('input');
+    case_.type = 'checkbox';
+    case_.checked = etat.coches.includes(e.id);
+    case_.setAttribute('aria-label', 'Télécharger l\'envoi de ' + e.animal[1] + ' à ' + heure(e.heure));
+    case_.onchange = () => basculerCoche(e.id);
+    coche.append(case_);
+    infos.prepend(coche);
 
     const actions = document.createElement('div');
     actions.className = 'actions';
@@ -339,6 +365,11 @@ function dessinerGalerie() {
   $('btn-diaporama').disabled = n === 0;
   $('btn-effacer').disabled = n === 0;
   $('btn-telecharger').disabled = n === 0;
+  $('btn-telecharger').textContent = etat.coches.length
+    ? '💾 Télécharger la sélection (' + etat.coches.length + ')'
+    : '💾 Tout télécharger' + (n ? ' (' + n + ')' : '');
+  $('btn-cocher').disabled = n === 0;
+  $('btn-cocher').textContent = etat.coches.length === n && n > 0 ? '☐ Tout décocher' : '☑️ Tout cocher';
   $('btn-comparer').disabled = etat.choisis.length !== 2;
   $('btn-comparer').textContent = '⚖️ Comparer (' + etat.choisis.length + '/2)';
 }
@@ -359,6 +390,7 @@ function retirerEnvoi(id) {
   URL.revokeObjectURL(etat.envois[i].url);
   etat.envois.splice(i, 1);
   etat.choisis = etat.choisis.filter((c) => c !== id);
+  etat.coches = etat.coches.filter((c) => c !== id);
   dessinerGalerie();
 }
 
@@ -367,6 +399,7 @@ function toutEffacer() {
   etat.envois.forEach((e) => URL.revokeObjectURL(e.url));
   etat.envois = [];
   etat.choisis = [];
+  etat.coches = [];
   dessinerGalerie();
 }
 
@@ -471,7 +504,8 @@ $('btn-qr-grand').onclick = () => ouvrirProjection({ mode: 'qr' });
 $('btn-diaporama').onclick = () => ouvrirProjection({ mode: 'un', index: 0 });
 $('btn-comparer').onclick = () => ouvrirProjection({ mode: 'duo', ids: [...etat.choisis] });
 $('btn-effacer').onclick = toutEffacer;
-$('btn-telecharger').onclick = toutTelecharger;
+$('btn-telecharger').onclick = telecharger;
+$('btn-cocher').onclick = toutCocher;
 $('proj-telecharger').onclick = () => {
   const p = etat.projection;
   if (!p || p.mode !== 'un') return;
