@@ -13,6 +13,9 @@ const etat = {
   prof: new URLSearchParams(location.search).has('prof'), // smartphone de l'enseignant : choix animal/code, élève suivant
   modeEcran: 'animaux', // mode demandé par l'écran de la classe
   modeLocal: 'animaux', // mode choisi sur ce téléphone (enseignant seulement)
+  pris: [],             // identités déjà portées par d'autres élèves (clés TRANSFERT.cle)
+  doublons: false,      // l'enseignant autorise deux élèves sur la même identité
+  client: null,         // identifiant stable de ce téléphone, conservé au rechargement de la page
   modeChoisi: false,    // l'enseignant a basculé lui-même : on ne suit plus l'écran
   pause: false,
   pret: null,       // { id, nom, mime, donnees, apercu }
@@ -42,6 +45,10 @@ function memoire(cle, valeur) {
 
 // ---------- Connexion à l'écran ----------
 
+function bonjour() {
+  return { type: 'bonjour', animal: etat.animal, client: etat.client, prof: etat.prof };
+}
+
 function rejoindre(code) {
   etat.code = code;
   majEtat('⏳ Connexion…');
@@ -70,12 +77,12 @@ function connecterEcran() {
     clearTimeout(minuterie);
     majEtat('🟢 Connecté', 'ok');
     if (etat.reconnexion) { // reconnexion silencieuse : on reste à l'étape en cours
-      if (etat.animal) conn.send({ type: 'bonjour', animal: etat.animal });
+      if (etat.animal) conn.send(bonjour());
       etat.reconnexion.ok();
       return;
     }
     if (etat.animal) {
-      conn.send({ type: 'bonjour', animal: etat.animal });
+      conn.send(bonjour());
       if (!$('etape-code').hidden || !$('etape-animal').hidden || ETAPES.every((e) => $(e).hidden)) montrer('etape-choisir');
     } else {
       montrer('etape-animal');
@@ -84,6 +91,9 @@ function connecterEcran() {
   conn.on('data', recevoir);
   conn.on('close', () => majEtat('🟠 Déconnecté', 'ko'));
 }
+
+// Signe de vie vers l'écran : sans lui, l'écran libère l'identité de ce téléphone au bout de 30 s.
+setInterval(() => { if (etat.conn && etat.conn.open) etat.conn.send({ type: 'ping' }); }, 5000);
 
 // Le téléphone coupe souvent la connexion quand l'élève quitte la page (appareil photo, verrouillage) :
 // on la rétablit sans perdre la photo préparée.
@@ -116,6 +126,9 @@ function recevoir(msg) {
     $('btn-envoyer').disabled = etat.pause;
     majEtat(etat.pause ? '⏸️ Envois en pause' : '🟢 Connecté', etat.pause ? '' : 'ok');
     const mode = msg.mode === 'codes' ? 'codes' : 'animaux';
+    etat.doublons = !!msg.doublons;
+    etat.pris = Array.isArray(msg.pris) ? msg.pris.filter((x) => typeof x === 'string') : [];
+    if (!$('etape-animal').hidden && modeIdentification() === 'animaux') dessinerAnimaux();
     if (mode !== etat.modeEcran) {
       etat.modeEcran = mode;
       if (etat.prof && !etat.modeChoisi) etat.modeLocal = mode;
@@ -131,6 +144,14 @@ function recevoir(msg) {
     if (msg.type === 'recu') resultat('✅', 'Bien reçu sur l\'écran !', 'Bien reçu.');
     else if (msg.raison === 'pause') resultat('⏸️', 'L\'enseignant a mis les envois en pause. Attends un peu.', 'Les envois sont en pause. Attends un peu.');
     else resultat('⚠️', 'Le fichier est trop lourd.', 'Le fichier est trop lourd.');
+  } else if (msg.type === 'identite-prise') {
+    // Deux élèves ont choisi la même identité presque en même temps : l'écran a gardé la première.
+    etat.animal = null;
+    if (!etat.prof) memoire('transfertactif-animal-' + etat.code, null);
+    majIdentite();
+    dessinerIdentification();
+    montrer('etape-animal');
+    signalerIdentitePrise();
   } else if (msg.type === 'document') {
     ajouterDocument(msg);
   }
@@ -143,7 +164,7 @@ function modeIdentification() { return etat.prof ? etat.modeLocal : etat.modeEcr
 function choisirIdentite(identite) {
   etat.animal = identite;
   if (!etat.prof) memoire('transfertactif-animal-' + etat.code, identite); // l'enseignant change d'élève à chaque envoi : rien à retenir
-  if (etat.conn && etat.conn.open) etat.conn.send({ type: 'bonjour', animal: identite });
+  if (etat.conn && etat.conn.open) etat.conn.send(bonjour());
   majIdentite();
   montrer('etape-choisir');
 }
@@ -176,6 +197,25 @@ function dessinerIdentification() {
     $('champ-pseudo').value = etat.animal && etat.animal[0] === TRANSFERT.CODE_EMOJI ? etat.animal[1] : '';
     return;
   }
+  $('msg-identite').hidden = true;
+  dessinerAnimaux();
+}
+
+// Identité déjà portée par un autre élève ? Jamais pour l'enseignant, ni si les doublons sont autorisés.
+function prisParUnAutre(identite) {
+  if (etat.prof || etat.doublons) return false;
+  if (etat.animal && TRANSFERT.cle(etat.animal) === TRANSFERT.cle(identite)) return false;
+  return etat.pris.includes(TRANSFERT.cle(identite));
+}
+
+function signalerIdentitePrise() {
+  const m = $('msg-identite');
+  m.textContent = 'Cet animal ou ce code est déjà pris par un autre élève. Choisis-en un autre.';
+  m.hidden = false;
+  TRANSFERT.parler('Déjà pris. Choisis-en un autre.');
+}
+
+function dessinerAnimaux() {
   const grille = $('animaux');
   grille.textContent = '';
   TRANSFERT.ANIMAUX.forEach((a) => {
@@ -185,6 +225,10 @@ function dessinerIdentification() {
     b.innerHTML = '<span class="emoji" aria-hidden="true"></span><span></span>';
     b.firstChild.textContent = a[0];
     b.lastChild.textContent = a[1];
+    if (prisParUnAutre(a)) {
+      b.disabled = true;
+      b.title = 'Déjà pris par un autre élève';
+    }
     b.onclick = () => choisirIdentite(a);
     grille.append(b);
   });
@@ -193,7 +237,9 @@ function dessinerIdentification() {
 function validerCode() {
   const code = TRANSFERT.normaliserPseudo($('champ-pseudo').value);
   if (!code) { $('champ-pseudo').focus(); return; }
-  choisirIdentite([TRANSFERT.CODE_EMOJI, code]);
+  const identite = [TRANSFERT.CODE_EMOJI, code];
+  if (prisParUnAutre(identite)) { signalerIdentitePrise(); $('champ-pseudo').focus(); return; }
+  choisirIdentite(identite);
 }
 
 // Enseignant : élève suivant = on oublie l'identité, pour ne jamais attribuer un envoi au mauvais élève.
@@ -449,6 +495,8 @@ function demarrer() {
     montrer('etape-code');
     return;
   }
+  etat.client = memoire('transfertactif-client') || TRANSFERT.uid();
+  memoire('transfertactif-client', etat.client);
   etat.animal = etat.prof ? null : TRANSFERT.identite(memoire('transfertactif-animal-' + code));
   ETAPES.forEach((e) => { $(e).hidden = true; });
   majIdentite();

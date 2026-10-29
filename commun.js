@@ -21,7 +21,8 @@ const TRANSFERT = {
     ['🐞', 'Coccinelle'], ['🦒', 'Girafe'], ['🐿️', 'Écureuil'], ['🐬', 'Dauphin'],
     ['🐘', 'Éléphant'], ['🦅', 'Aigle'], ['🐺', 'Loup'], ['🐻', 'Ours'],
     ['🦓', 'Zèbre'], ['🐼', 'Panda'], ['🦜', 'Perroquet'], ['🐠', 'Poisson'],
-    ['🐇', 'Lapin'], ['🐴', 'Cheval'],
+    ['🐇', 'Lapin'], ['🐴', 'Cheval'], ['🦆', 'Canard'], ['🐑', 'Mouton'],
+    ['🐊', 'Crocodile'], ['🐍', 'Serpent'],
   ],
   // Identité par code : le même couple [emoji, texte] qu'un animal, pour que l'écran n'ait qu'un seul cas à gérer.
   CODE_EMOJI: '🔖',
@@ -30,6 +31,9 @@ const TRANSFERT = {
   normaliserPseudo(saisie) {
     return (saisie || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 8);
   },
+
+  // Clé stable d'une identité, pour comparer les identités déjà prises.
+  cle(a) { return a[0] + '|' + a[1]; },
 
   // Renvoie l'identité [emoji, texte] si c'est un animal de la liste ou un code valide, sinon null.
   identite(a) {

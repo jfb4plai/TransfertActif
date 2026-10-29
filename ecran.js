@@ -12,6 +12,7 @@ const etat = {
   choisis: [],           // ids sélectionnés pour la comparaison
   coches: [],            // ids cochés pour le téléchargement (indépendant de la comparaison)
   pause: false,
+  doublons: false,       // true : deux élèves peuvent porter le même animal ou code (binômes)
   mode: 'animaux',       // identification des élèves : 'animaux' (26) ou 'codes'
   projection: null,      // { mode: 'qr' } | { mode: 'un', index } | { mode: 'duo', ids }
   dernier: null,         // id du dernier envoi, seul à être animé à son arrivée
@@ -30,8 +31,25 @@ function lienEnvoi(code, prof) {
   return new URL('envoyer.html' + (prof ? '?prof' : '') + '#' + code, location.href).href;
 }
 
+// Identités déjà portées par un élève connecté. Le smartphone de l'enseignant n'en bloque aucune.
+function prises() {
+  const cles = new Set();
+  etat.connexions.forEach((i) => { if (i.animal && !i.prof) cles.add(TRANSFERT.cle(i.animal)); });
+  return [...cles];
+}
+
 function messageEtat() {
-  return { type: 'etat', pause: etat.pause, mode: etat.mode };
+  return { type: 'etat', pause: etat.pause, mode: etat.mode, doublons: etat.doublons, pris: prises() };
+}
+
+function diffuserEtat() {
+  etat.connexions.forEach(({ conn }) => conn.open && conn.send(messageEtat()));
+}
+
+// Un autre élève (autre client, pas l'enseignant) porte-t-il déjà cette identité ?
+function prisParUnAutre(identite, moi) {
+  const cle = TRANSFERT.cle(identite);
+  return [...etat.connexions.values()].some((i) => i !== moi && !i.prof && i.client !== moi.client && i.animal && TRANSFERT.cle(i.animal) === cle);
 }
 
 // Niveau de correction H (≈30 % récupérable) : le logo posé au centre n'empêche pas la lecture.
@@ -86,9 +104,23 @@ function demarrer() {
   });
 }
 
+// WebRTC ne signale pas toujours la fermeture d'un onglet : sans nouvelles depuis 30 s (les téléphones
+// envoient un « ping » toutes les 5 s), on considère le téléphone parti et son identité est libérée.
+setInterval(() => {
+  let parti = false;
+  etat.connexions.forEach((info, id) => {
+    if (Date.now() - info.vu > 30000) {
+      etat.connexions.delete(id);
+      try { info.conn.close(); } catch (_) { /* déjà fermée */ }
+      parti = true;
+    }
+  });
+  if (parti) { majTelephones(); diffuserEtat(); }
+}, 5000);
+
 function accueillir(conn) {
   conn.on('open', () => {
-    etat.connexions.set(conn.connectionId, { conn, animal: null });
+    etat.connexions.set(conn.connectionId, { conn, animal: null, vu: Date.now() });
     majTelephones();
     conn.send(messageEtat());
   });
@@ -96,6 +128,7 @@ function accueillir(conn) {
   const fin = () => {
     etat.connexions.delete(conn.connectionId);
     majTelephones();
+    diffuserEtat(); // l'identité du téléphone parti redevient disponible
   };
   conn.on('close', fin);
   conn.on('error', fin);
@@ -104,9 +137,22 @@ function accueillir(conn) {
 function recevoir(conn, msg) {
   if (!msg || typeof msg !== 'object') return;
   const info = etat.connexions.get(conn.connectionId);
+  if (info) info.vu = Date.now();
+  if (msg.type === 'ping') return;
 
   if (msg.type === 'bonjour') {
-    if (info) info.animal = validerAnimal(msg.animal);
+    if (!info) return;
+    const identite = validerAnimal(msg.animal);
+    // « client » est stable d'un rechargement à l'autre : un élève qui se reconnecte ne se bloque pas lui-même.
+    info.client = typeof msg.client === 'string' ? msg.client.slice(0, 64) : conn.connectionId;
+    info.prof = msg.prof === true;
+    if (identite && !info.prof && !etat.doublons && prisParUnAutre(identite, info)) {
+      info.animal = null;
+      conn.send({ type: 'identite-prise' });
+    } else {
+      info.animal = identite;
+    }
+    diffuserEtat();
     return;
   }
 
@@ -518,10 +564,11 @@ function choisirMode(mode) {
   etat.mode = mode;
   $('mode-animaux').setAttribute('aria-pressed', String(mode === 'animaux'));
   $('mode-codes').setAttribute('aria-pressed', String(mode === 'codes'));
-  etat.connexions.forEach(({ conn }) => conn.open && conn.send(messageEtat()));
+  diffuserEtat();
 }
 $('mode-animaux').onclick = () => choisirMode('animaux');
 $('mode-codes').onclick = () => choisirMode('codes');
+$('doublons').onchange = (ev) => { etat.doublons = ev.target.checked; diffuserEtat(); };
 $('btn-diaporama').onclick = () => ouvrirProjection({ mode: 'un', index: 0 });
 $('btn-comparer').onclick = () => ouvrirProjection({ mode: 'duo', ids: [...etat.choisis] });
 $('btn-effacer').onclick = toutEffacer;
@@ -541,7 +588,7 @@ $('btn-pause').onclick = (ev) => {
   etat.pause = !etat.pause;
   ev.currentTarget.setAttribute('aria-pressed', String(etat.pause));
   ev.currentTarget.textContent = etat.pause ? '▶️ Reprendre' : '⏸️ Pause';
-  etat.connexions.forEach(({ conn }) => conn.open && conn.send(messageEtat()));
+  diffuserEtat();
   toast(etat.pause ? 'Envois en pause.' : 'Envois rouverts.');
 };
 
