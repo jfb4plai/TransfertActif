@@ -19,6 +19,13 @@
     .guide .limite { border-left: 6px solid var(--rouge); padding-left: 12px; }
     .guide .retour { align-self: flex-start; }
     .guide kbd, .guide .btn-nom { display: inline-block; padding: 2px 8px; border: 1px solid var(--bord); border-radius: 8px; background: var(--surface-2); font-size: .95em; }
+    .fig { margin: 12px 0 8px; }
+    .fig img { display: block; max-width: 100%; height: auto; border: 1px solid var(--bord); border-radius: 12px; }
+    .fig figcaption { margin-top: 6px; font-size: .9rem; color: var(--texte-doux); }
+    .fig.tel img { max-width: 320px; }
+    .duo { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+    .duo .fig { flex: 1 1 260px; }
+    .bandeau-exemple { font-size: .9rem; color: var(--texte-doux); }
   </style>
 </head>
 <body>
@@ -58,6 +65,7 @@
       </ol>
       <p>Le code change à chaque ouverture de la page. Les élèves dont la caméra ne scanne pas le QR code peuvent ouvrir la page d'envoi et taper ce code de 5 caractères.</p>
       <p>La pastille <span class="btn-nom">📱 N</span> indique le nombre de téléphones connectés.</p>
+      <figure class="fig "><img src="guide-img/ecran-accueil.png" width="1407" height="1311" alt="Écran de classe : QR code, code de la classe, choix Animal ou Code, case doublons"><figcaption>L'écran de classe à l'ouverture : QR code, code de la classe, choix Animal ou Code, case « Autoriser les doublons ».</figcaption></figure>
     </section>
 
     <section class="carte" id="identifier">
@@ -73,6 +81,7 @@
       <h3>Autoriser les doublons</h3>
       <p>Cocher <span class="btn-nom">Autoriser les doublons</span> pour un travail à deux : les deux élèves peuvent alors porter le même animal ou le même code. La case agit tout de suite sur tous les téléphones.</p>
       <p>Si tu décoches la case alors que deux élèves portent déjà la même identité, l'un des deux sera refusé s'il recharge sa page. Il devra en choisir une autre.</p>
+      <figure class="fig tel"><img src="guide-img/tel-animaux.png" width="753" height="1160" alt="Téléphone d'un élève : la grille des animaux, Renard est grisé"><figcaption>Sur le téléphone d'un deuxième élève : Renard est grisé, car un autre élève l'a déjà choisi.</figcaption></figure>
     </section>
 
     <section class="carte" id="eleves">
@@ -88,6 +97,7 @@
       </ol>
       <p>Chaque consigne du parcours élève se lit à voix haute avec le bouton 🔊. La synthèse vocale est celle du navigateur du téléphone : rien ne part vers un service externe.</p>
       <p>Avant l'envoi, la photo est réduite (2000 pixels au plus) et ré-encodée en JPEG. Ce traitement supprime les métadonnées de la photo, dont la position GPS du téléphone.</p>
+      <div class="duo"><figure class="fig tel"><img src="guide-img/tel-verifier.png" width="753" height="1160" alt="Téléphone : étape 3, vérifier la photo puis envoyer"><figcaption>Étape 3 : l'élève vérifie sa photo, puis appuie sur « Envoyer ».</figcaption></figure><figure class="fig tel"><img src="guide-img/tel-recu.png" width="753" height="720" alt="Téléphone : confirmation « Bien reçu sur l'écran »"><figcaption>Le ✅ confirme que l'envoi est arrivé sur l'écran de classe.</figcaption></figure></div>
     </section>
 
     <section class="carte" id="mur">
@@ -104,6 +114,7 @@
         <li>Cliquer sur <span class="btn-nom">⚖️ Comparer</span>.</li>
       </ol>
       <p>Si tu choisis un troisième envoi, le plus ancien choix est remplacé. Exemple d'usage : comparer deux dressages d'assiette, deux coupes ou deux schémas pour une mise en commun.</p>
+      <figure class="fig "><img src="guide-img/ecran-comparer.png" width="1407" height="1311" alt="Projection de deux productions côte à côte, avec le pseudo sous chacune"><figcaption>Deux productions côte à côte en plein écran. « Enregistrer » et « Fermer (Échap) » sont en bas.</figcaption></figure>
       <h3>Projeter tout</h3>
       <p><span class="btn-nom">▶️ Projeter tout</span> affiche les envois un par un en plein écran. Naviguer avec les flèches ← et → du clavier, fermer avec Échap.</p>
     </section>
@@ -118,6 +129,7 @@
       </ul>
       <p>Les fichiers s'appellent par exemple <kbd>Renard_10h42_photo.jpg</kbd> ou <kbd>E07_10h42_photo.jpg</kbd> : le pseudo et l'heure évitent que les photos de téléphone, toutes nommées « photo.jpg », s'écrasent. Un rang est ajouté en cas de doublon.</p>
       <p>Le fichier arrive dans le dossier Téléchargements de l'ordinateur, selon le réglage du navigateur.</p>
+      <figure class="fig "><img src="guide-img/ecran-galerie.png" width="1407" height="1311" alt="Galerie de quatre envois, deux cases cochées, bouton Télécharger la sélection (2)"><figcaption>Deux envois cochés : le bouton devient « Télécharger la sélection (2) ».</figcaption></figure>
     </section>
 
     <section class="carte" id="smartphone">
@@ -130,6 +142,7 @@
         <li>Choisir ensuite « Même élève : autre page » (plusieurs pages du même élève) ou « Élève suivant » (l'identité est alors oubliée, pour ne jamais attribuer un envoi au mauvais élève).</li>
       </ol>
       <p>Ton smartphone n'est jamais bloqué par une identité déjà prise, et il n'en bloque aucune pour les élèves.</p>
+      <figure class="fig tel"><img src="guide-img/tel-prof.png" width="753" height="700" alt="Smartphone de l'enseignant après un envoi : Même élève autre page, Élève suivant"><figcaption>Sur le smartphone de l'enseignant, après un envoi : « Même élève : autre page » ou « Élève suivant ».</figcaption></figure>
     </section>
 
     <section class="carte" id="distribuer">
@@ -140,15 +153,18 @@
         <li>Cliquer sur <span class="btn-nom">📤 Distribuer un document</span> et choisir le fichier.</li>
         <li>Lire la confirmation : « envoyé à N téléphone(s) ».</li>
       </ol>
+      <figure class="fig "><img src="guide-img/ecran-boutons.png" width="1407" height="1311" alt="Écran de classe : boutons QR code en grand, QR pour mon smartphone, Pause, Masquer, Distribuer un document"><figcaption>Les boutons de l'écran de classe : QR code, smartphone enseignant, Pause, Masquer, Distribuer un document.</figcaption></figure>
       <p>Sur chaque téléphone apparaît une carte « Documents de l'enseignant » avec un lien de téléchargement, et la phrase « L'enseignant t'a envoyé un document » est lue à voix haute.</p>
+      <figure class="fig tel"><img src="guide-img/tel-document.png" width="753" height="830" alt="Téléphone d'un élève : carte Documents de l'enseignant avec le fichier reçu"><figcaption>Sur le téléphone de l'élève : la carte « Documents de l'enseignant » avec le lien du fichier.</figcaption></figure>
       <p class="limite"><strong>À savoir :</strong> le document part à tous les téléphones connectés à ce moment-là, sans choix possible d'un seul élève. Un élève qui se connecte après l'envoi ne le reçoit pas : cliquer à nouveau sur « Distribuer ». Taille maximale : 25 Mo.</p>
     </section>
 
     <section class="carte" id="masquer">
       <h2>Masquer les pseudos</h2>
-      <p><span class="btn-nom">🙈 Masquer</span> cache l'animal ou le code affiché sous chaque production, dans la galerie et dans la projection. Un second clic les ré-affiche.</p>
+      <p><span class="btn-nom">🙈 Masquer</span> cache le <strong>nom</strong> (le mot « Renard » ou le code « E07 ») sous chaque production, dans la galerie et dans la projection. Un second clic le ré-affiche.</p>
       <p>Quand l'utiliser : avant de projeter le mur, pour commenter les productions sans désigner leur auteur.</p>
-      <p class="limite"><strong>À savoir :</strong> « Masquer » ne change que l'affichage. Les fichiers téléchargés gardent le pseudo dans leur nom.</p>
+      <figure class="fig "><img src="guide-img/ecran-masquer.png" width="1407" height="1311" alt="Galerie avec « Masquer » actif : les noms sont cachés, les pictogrammes restent"><figcaption>« Masquer » actif : les noms ont disparu, mais le pictogramme de chaque animal reste affiché.</figcaption></figure>
+      <p class="limite"><strong>À savoir :</strong> en mode <strong>Animal</strong>, le pictogramme (🦊, 🐢…) reste visible : les élèves reconnaissent encore leur animal. Pour un masquage complet, utiliser le mode <strong>Code</strong> : le pictogramme est alors le même pour tous (🔖) et seul le code disparaît. « Masquer » ne change que l'affichage : les fichiers téléchargés gardent le pseudo dans leur nom.</p>
     </section>
 
     <section class="carte" id="pause">
@@ -164,6 +180,7 @@
         <li><strong>25 Mo par fichier</strong>, dans les deux sens.</li>
         <li><strong>Réseau d'école filtré.</strong> La connexion est directe entre les téléphones et l'ordinateur, sans serveur relais. Sur un réseau très filtré, elle peut échouer : le téléphone de l'élève passé en 4G contourne le problème.</li>
         <li><strong>Pas encore testé</strong> sur un large parc de téléphones réels ni sur le réseau d'une école. Faire un essai de deux minutes avec deux élèves avant la première séance.</li>
+        <li><strong>Captures d'écran.</strong> Les images de ce guide montrent des productions fabriquées pour l'exemple (dessins d'assiettes), pas des travaux d'élèves.</li>
         <li><strong>Visages et noms.</strong> L'app rappelle « pas de visage, pas de nom » avant chaque photo, mais ne contrôle pas le contenu. Le bouton ✖️ permet de retirer un envoi.</li>
       </ul>
     </section>
