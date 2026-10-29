@@ -262,3 +262,7 @@ button, input, select { font: inherit; color: inherit; }
 
 .envoi .infos .coche { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; margin: -8px 0 -8px -10px; cursor: pointer; }
 .envoi .infos .coche input { width: 22px; height: 22px; cursor: pointer; accent-color: var(--accent); }
+
+.mode-pseudo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: .9rem; }
+.mode-pseudo > span { flex: 1 1 100%; font-weight: 700; }
+.mode-pseudo .bouton { flex: 1; }

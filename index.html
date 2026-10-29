@@ -27,8 +27,15 @@
       <div class="qr" id="qr" aria-hidden="true"></div>
       <p class="code" id="code" aria-label="Code de la classe">·····</p>
       <p class="lien" id="lien"></p>
+      <div class="mode-pseudo" role="group" aria-labelledby="titre-mode">
+        <span id="titre-mode">Les élèves s'identifient par :</span>
+        <button class="bouton" id="mode-animaux" aria-pressed="true">🦊 Animal</button>
+        <button class="bouton" id="mode-codes" aria-pressed="false">🔖 Code</button>
+      </div>
+      <p class="aide">Animal : 26 au choix, pratique au fondamental. Code : l'élève tape le code que tu lui as donné (ex. E07, 8 caractères au plus), pratique au secondaire. Jamais de prénom.</p>
       <div class="outils">
         <button class="bouton large principal" id="btn-qr-grand">🔍 QR code en grand</button>
+        <button class="bouton large" id="btn-qr-prof">📱 QR pour mon smartphone (enseignant)</button>
         <button class="bouton" id="btn-pause" aria-pressed="false">⏸️ Pause</button>
         <button class="bouton" id="btn-pseudos" aria-pressed="false">🙈 Masquer</button>
         <label class="bouton large" for="fichier-distribuer">📤 Distribuer un document</label>

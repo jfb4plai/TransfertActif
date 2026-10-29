@@ -30,15 +30,28 @@
       <button class="bouton principal gros-bouton" id="btn-code">Rejoindre</button>
     </section>
 
-    <!-- 1. Choisir son animal -->
+    <!-- 1. S'identifier : animal ou code -->
     <section class="carte etape" id="etape-animal" hidden>
       <div class="titre">
         <span class="numero" aria-hidden="true">1</span>
-        <h2>Choisis ton animal</h2>
-        <button class="bouton ecouter" data-lire="Étape 1. Choisis ton animal. Ton prénom ne sera pas affiché." aria-label="Écouter la consigne">🔊</button>
+        <h2 id="titre-identification">Choisis ton animal</h2>
+        <button class="bouton ecouter" id="ecouter-identification" data-lire="Étape 1. Choisis ton animal. Ton prénom ne sera pas affiché." aria-label="Écouter la consigne">🔊</button>
       </div>
-      <p class="aide" style="margin:0">Ton prénom ne s'affiche pas. Seulement ton animal.</p>
-      <div class="animaux" id="animaux"></div>
+      <div class="mode-pseudo" id="bascule-mode" role="group" aria-label="Identifier par" hidden>
+        <span>Identifier par :</span>
+        <button class="bouton" id="bascule-animaux" aria-pressed="true">🦊 Animal</button>
+        <button class="bouton" id="bascule-codes" aria-pressed="false">🔖 Code</button>
+      </div>
+      <div id="bloc-animaux">
+        <p class="aide" style="margin:0 0 8px">Ton prénom ne s'affiche pas. Seulement ton animal.</p>
+        <div class="animaux" id="animaux"></div>
+      </div>
+      <div id="bloc-code" hidden>
+        <label for="champ-pseudo" id="label-pseudo" style="font-weight:700">Ton code</label>
+        <input id="champ-pseudo" class="champ-code" maxlength="8" autocomplete="off" autocapitalize="characters" inputmode="text" placeholder="ex. E07">
+        <p class="aide" id="aide-pseudo" style="margin:8px 0">Tape le code donné par ton enseignant : lettres sans accent, chiffres ou tiret, 8 au plus. Pas de prénom : seul ce code s'affiche à l'écran et dans le nom du fichier.</p>
+        <button class="bouton principal gros-bouton" id="btn-pseudo">Valider</button>
+      </div>
     </section>
 
     <!-- 2. Prendre / choisir -->
@@ -55,6 +68,7 @@
       <label class="bouton gros-bouton" for="fichier"><span class="emoji" aria-hidden="true">📁</span> Choisir une photo ou un fichier</label>
       <input type="file" id="fichier" class="cache-fichier" tabindex="-1">
       <p class="preparation" id="preparation" role="status" hidden>⏳ Préparation de la photo…</p>
+      <p class="aide" id="identite" style="margin:0;font-weight:700"></p>
       <button class="bouton" id="btn-changer-animal">Changer d'animal</button>
     </section>
 
@@ -73,6 +87,7 @@
     <!-- 4. Résultat -->
     <section class="carte etape" id="etape-resultat" hidden>
       <div class="resultat" id="resultat" role="status"></div>
+      <button class="bouton principal gros-bouton" id="btn-meme" hidden><span class="emoji" aria-hidden="true">📄</span> Même élève : autre page</button>
       <button class="bouton principal gros-bouton" id="btn-autre"><span class="emoji" aria-hidden="true">📷</span> Envoyer autre chose</button>
     </section>
 

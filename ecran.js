@@ -12,6 +12,7 @@ const etat = {
   choisis: [],           // ids sélectionnés pour la comparaison
   coches: [],            // ids cochés pour le téléchargement (indépendant de la comparaison)
   pause: false,
+  mode: 'animaux',       // identification des élèves : 'animaux' (26) ou 'codes'
   projection: null,      // { mode: 'qr' } | { mode: 'un', index } | { mode: 'duo', ids }
   dernier: null,         // id du dernier envoi, seul à être animé à son arrivée
 };
@@ -24,8 +25,13 @@ function toast(texte) {
   toast.minuterie = setTimeout(() => { t.hidden = true; }, 3500);
 }
 
-function lienEnvoi(code) {
-  return new URL('envoyer.html#' + code, location.href).href;
+// prof : lien pour le smartphone de l'enseignant (choix animal/code à l'envoi, « élève suivant »).
+function lienEnvoi(code, prof) {
+  return new URL('envoyer.html' + (prof ? '?prof' : '') + '#' + code, location.href).href;
+}
+
+function messageEtat() {
+  return { type: 'etat', pause: etat.pause, mode: etat.mode };
 }
 
 // Niveau de correction H (≈30 % récupérable) : le logo posé au centre n'empêche pas la lecture.
@@ -84,7 +90,7 @@ function accueillir(conn) {
   conn.on('open', () => {
     etat.connexions.set(conn.connectionId, { conn, animal: null });
     majTelephones();
-    conn.send({ type: 'etat', pause: etat.pause });
+    conn.send(messageEtat());
   });
   conn.on('data', (msg) => recevoir(conn, msg));
   const fin = () => {
@@ -130,10 +136,9 @@ function recevoir(conn, msg) {
   }
 }
 
-// N'accepte qu'un animal de la liste : rien d'autre que le pseudo ne s'affiche à l'écran.
+// N'accepte qu'un animal de la liste ou un code (A-Z, 0-9, tiret, 8 max) : rien d'autre ne s'affiche à l'écran.
 function validerAnimal(a) {
-  if (!Array.isArray(a)) return null;
-  return TRANSFERT.ANIMAUX.find(([e, n]) => e === a[0] && n === a[1]) || null;
+  return TRANSFERT.identite(a);
 }
 
 // ---------- Téléchargement sur l'ordinateur ----------
@@ -455,11 +460,17 @@ function dessinerProjection() {
     boite.style.cssText = 'display:flex;flex-direction:column;gap:16px;margin:auto;';
     const qr = document.createElement('div');
     qr.className = 'grand-qr';
-    qr.innerHTML = qrSvg(lienEnvoi(etat.code));
+    qr.innerHTML = qrSvg(lienEnvoi(etat.code, p.prof));
     const code = document.createElement('div');
     code.className = 'grand-code';
     code.textContent = etat.code;
     boite.append(qr, code);
+    if (p.prof) {
+      const note = document.createElement('div');
+      note.className = 'legende';
+      note.textContent = '📱 Lien enseignant : à scanner avec ton smartphone';
+      boite.append(note);
+    }
     scene.append(boite);
   } else if (p.mode === 'un') {
     const e = etat.envois[p.index];
@@ -501,6 +512,16 @@ async function distribuer(fichier) {
 // ---------- Commandes ----------
 
 $('btn-qr-grand').onclick = () => ouvrirProjection({ mode: 'qr' });
+$('btn-qr-prof').onclick = () => ouvrirProjection({ mode: 'qr', prof: true });
+
+function choisirMode(mode) {
+  etat.mode = mode;
+  $('mode-animaux').setAttribute('aria-pressed', String(mode === 'animaux'));
+  $('mode-codes').setAttribute('aria-pressed', String(mode === 'codes'));
+  etat.connexions.forEach(({ conn }) => conn.open && conn.send(messageEtat()));
+}
+$('mode-animaux').onclick = () => choisirMode('animaux');
+$('mode-codes').onclick = () => choisirMode('codes');
 $('btn-diaporama').onclick = () => ouvrirProjection({ mode: 'un', index: 0 });
 $('btn-comparer').onclick = () => ouvrirProjection({ mode: 'duo', ids: [...etat.choisis] });
 $('btn-effacer').onclick = toutEffacer;
@@ -520,7 +541,7 @@ $('btn-pause').onclick = (ev) => {
   etat.pause = !etat.pause;
   ev.currentTarget.setAttribute('aria-pressed', String(etat.pause));
   ev.currentTarget.textContent = etat.pause ? '▶️ Reprendre' : '⏸️ Pause';
-  etat.connexions.forEach(({ conn }) => conn.open && conn.send({ type: 'etat', pause: etat.pause }));
+  etat.connexions.forEach(({ conn }) => conn.open && conn.send(messageEtat()));
   toast(etat.pause ? 'Envois en pause.' : 'Envois rouverts.');
 };
 

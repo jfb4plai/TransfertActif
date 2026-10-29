@@ -19,7 +19,24 @@ const TRANSFERT = {
     ['🐙', 'Pieuvre'], ['🦔', 'Hérisson'], ['🐸', 'Grenouille'], ['🦋', 'Papillon'],
     ['🐳', 'Baleine'], ['🦁', 'Lion'], ['🐧', 'Manchot'], ['🐌', 'Escargot'],
     ['🐞', 'Coccinelle'], ['🦒', 'Girafe'], ['🐿️', 'Écureuil'], ['🐬', 'Dauphin'],
+    ['🐘', 'Éléphant'], ['🦅', 'Aigle'], ['🐺', 'Loup'], ['🐻', 'Ours'],
+    ['🦓', 'Zèbre'], ['🐼', 'Panda'], ['🦜', 'Perroquet'], ['🐠', 'Poisson'],
+    ['🐇', 'Lapin'], ['🐴', 'Cheval'],
   ],
+  // Identité par code : le même couple [emoji, texte] qu'un animal, pour que l'écran n'ait qu'un seul cas à gérer.
+  CODE_EMOJI: '🔖',
+
+  // Code d'élève : lettres sans accent, chiffres et tiret, 8 caractères au plus. Aucun prénom possible en pratique.
+  normaliserPseudo(saisie) {
+    return (saisie || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 8);
+  },
+
+  // Renvoie l'identité [emoji, texte] si c'est un animal de la liste ou un code valide, sinon null.
+  identite(a) {
+    if (!Array.isArray(a)) return null;
+    if (a[0] === this.CODE_EMOJI) return typeof a[1] === 'string' && /^[A-Z0-9-]{1,8}$/.test(a[1]) ? [a[0], a[1]] : null;
+    return this.ANIMAUX.find(([e, n]) => e === a[0] && n === a[1]) || null;
+  },
 
   nouveauCode(n = 5) {
     const octets = crypto.getRandomValues(new Uint8Array(n));

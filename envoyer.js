@@ -9,7 +9,11 @@ const etat = {
   code: null,
   pair: null,
   conn: null,
-  animal: null,
+  animal: null,     // identité [emoji, texte] : un animal ou un code (voir TRANSFERT.identite)
+  prof: new URLSearchParams(location.search).has('prof'), // smartphone de l'enseignant : choix animal/code, élève suivant
+  modeEcran: 'animaux', // mode demandé par l'écran de la classe
+  modeLocal: 'animaux', // mode choisi sur ce téléphone (enseignant seulement)
+  modeChoisi: false,    // l'enseignant a basculé lui-même : on ne suit plus l'écran
   pause: false,
   pret: null,       // { id, nom, mime, donnees, apercu }
   attente: null,    // { id, minuterie }
@@ -111,6 +115,15 @@ function recevoir(msg) {
     etat.pause = !!msg.pause;
     $('btn-envoyer').disabled = etat.pause;
     majEtat(etat.pause ? '⏸️ Envois en pause' : '🟢 Connecté', etat.pause ? '' : 'ok');
+    const mode = msg.mode === 'codes' ? 'codes' : 'animaux';
+    if (mode !== etat.modeEcran) {
+      etat.modeEcran = mode;
+      if (etat.prof && !etat.modeChoisi) etat.modeLocal = mode;
+      if (!$('etape-animal').hidden) dessinerIdentification();
+    } else if (etat.prof && !etat.modeChoisi && etat.modeLocal !== mode) {
+      etat.modeLocal = mode;
+      if (!$('etape-animal').hidden) dessinerIdentification();
+    }
   } else if (msg.type === 'recu' || msg.type === 'refuse') {
     if (!etat.attente || etat.attente.id !== msg.id) return;
     clearTimeout(etat.attente.minuterie);
@@ -123,9 +136,46 @@ function recevoir(msg) {
   }
 }
 
-// ---------- Étape 1 : animal ----------
+// ---------- Étape 1 : s'identifier (animal ou code) ----------
 
-function dessinerAnimaux() {
+function modeIdentification() { return etat.prof ? etat.modeLocal : etat.modeEcran; }
+
+function choisirIdentite(identite) {
+  etat.animal = identite;
+  if (!etat.prof) memoire('transfertactif-animal-' + etat.code, identite); // l'enseignant change d'élève à chaque envoi : rien à retenir
+  if (etat.conn && etat.conn.open) etat.conn.send({ type: 'bonjour', animal: identite });
+  majIdentite();
+  montrer('etape-choisir');
+}
+
+function majIdentite() {
+  const id = etat.animal;
+  $('identite').textContent = id ? (etat.prof ? 'Élève : ' : 'Tu es : ') + id[0] + ' ' + id[1] : '';
+  $('btn-changer-animal').textContent = etat.prof ? 'Changer d\'élève'
+    : (id && id[0] === TRANSFERT.CODE_EMOJI ? 'Changer de code' : 'Changer d\'animal');
+}
+
+function dessinerIdentification() {
+  const codes = modeIdentification() === 'codes';
+  $('bascule-mode').hidden = !etat.prof;
+  $('bascule-animaux').setAttribute('aria-pressed', String(!codes));
+  $('bascule-codes').setAttribute('aria-pressed', String(codes));
+  $('bloc-animaux').hidden = codes;
+  $('bloc-code').hidden = !codes;
+  const consigne = codes
+    ? (etat.prof ? 'Tape le code de l\'élève' : 'Tape ton code')
+    : (etat.prof ? 'Choisis l\'animal de l\'élève' : 'Choisis ton animal');
+  $('titre-identification').textContent = consigne;
+  $('ecouter-identification').dataset.lire = 'Étape 1. ' + consigne + '. Aucun prénom ne sera affiché.';
+  if (codes) {
+    $('label-pseudo').textContent = etat.prof ? 'Code de l\'élève' : 'Ton code';
+    $('aide-pseudo').textContent = (etat.prof
+      ? 'Code de l\'élève dont tu envoies le travail'
+      : 'Tape le code donné par ton enseignant')
+      + ' : lettres sans accent, chiffres ou tiret, 8 au plus. Pas de prénom : seul ce code s\'affiche à l\'écran et dans le nom du fichier.';
+    $('champ-pseudo').value = etat.animal && etat.animal[0] === TRANSFERT.CODE_EMOJI ? etat.animal[1] : '';
+    return;
+  }
   const grille = $('animaux');
   grille.textContent = '';
   TRANSFERT.ANIMAUX.forEach((a) => {
@@ -135,15 +185,23 @@ function dessinerAnimaux() {
     b.innerHTML = '<span class="emoji" aria-hidden="true"></span><span></span>';
     b.firstChild.textContent = a[0];
     b.lastChild.textContent = a[1];
-    b.onclick = () => {
-      etat.animal = a;
-      memoire('transfertactif-animal-' + etat.code, a);
-      if (etat.conn && etat.conn.open) etat.conn.send({ type: 'bonjour', animal: a });
-      dessinerAnimaux();
-      montrer('etape-choisir');
-    };
+    b.onclick = () => choisirIdentite(a);
     grille.append(b);
   });
+}
+
+function validerCode() {
+  const code = TRANSFERT.normaliserPseudo($('champ-pseudo').value);
+  if (!code) { $('champ-pseudo').focus(); return; }
+  choisirIdentite([TRANSFERT.CODE_EMOJI, code]);
+}
+
+// Enseignant : élève suivant = on oublie l'identité, pour ne jamais attribuer un envoi au mauvais élève.
+function eleveSuivant() {
+  etat.animal = null;
+  majIdentite();
+  dessinerIdentification();
+  montrer('etape-animal');
 }
 
 // ---------- Étape 2 : préparer le fichier ----------
@@ -263,8 +321,16 @@ function resultat(emoji, texte, aLire) {
   $('resultat').firstChild.textContent = emoji;
   $('resultat').lastChild.textContent = texte;
   $('btn-envoyer').innerHTML = '<span class="emoji" aria-hidden="true">🕊️</span> Envoyer';
-  $('btn-autre').innerHTML = '<span class="emoji" aria-hidden="true">📷</span> Envoyer autre chose';
-  $('btn-autre').onclick = () => montrer('etape-choisir');
+  const profOk = etat.prof && emoji === '✅';
+  $('btn-meme').hidden = !profOk;
+  $('btn-meme').onclick = () => montrer('etape-choisir');
+  if (profOk) {
+    $('btn-autre').innerHTML = '<span class="emoji" aria-hidden="true">👤</span> Élève suivant';
+    $('btn-autre').onclick = eleveSuivant;
+  } else {
+    $('btn-autre').innerHTML = '<span class="emoji" aria-hidden="true">📷</span> Envoyer autre chose';
+    $('btn-autre').onclick = () => montrer('etape-choisir');
+  }
   montrer('etape-resultat');
   if (aLire) TRANSFERT.parler(aLire);
 }
@@ -358,7 +424,15 @@ $('photo').onchange = (ev) => { preparer(ev.target.files[0]); ev.target.value = 
 $('fichier').onchange = (ev) => { preparer(ev.target.files[0]); ev.target.value = ''; };
 $('btn-envoyer').onclick = envoyer;
 $('btn-recommencer').onclick = () => montrer('etape-choisir');
-$('btn-changer-animal').onclick = () => { dessinerAnimaux(); montrer('etape-animal'); };
+$('btn-changer-animal').onclick = () => { dessinerIdentification(); montrer('etape-animal'); };
+$('bascule-animaux').onclick = () => { etat.modeLocal = 'animaux'; etat.modeChoisi = true; dessinerIdentification(); };
+$('bascule-codes').onclick = () => { etat.modeLocal = 'codes'; etat.modeChoisi = true; dessinerIdentification(); };
+$('btn-pseudo').onclick = validerCode;
+$('champ-pseudo').addEventListener('input', (ev) => {
+  const propre = TRANSFERT.normaliserPseudo(ev.target.value);
+  if (propre !== ev.target.value) ev.target.value = propre;
+});
+$('champ-pseudo').addEventListener('keydown', (ev) => { if (ev.key === 'Enter') validerCode(); });
 $('btn-autre').onclick = () => montrer('etape-choisir');
 
 // Retour sur la page (après l'appareil photo du téléphone, un verrouillage…) : on vérifie la connexion.
@@ -375,10 +449,10 @@ function demarrer() {
     montrer('etape-code');
     return;
   }
-  etat.animal = memoire('transfertactif-animal-' + code);
-  if (!TRANSFERT.ANIMAUX.some((a) => etat.animal && a[1] === etat.animal[1])) etat.animal = null;
+  etat.animal = etat.prof ? null : TRANSFERT.identite(memoire('transfertactif-animal-' + code));
   ETAPES.forEach((e) => { $(e).hidden = true; });
-  dessinerAnimaux();
+  majIdentite();
+  dessinerIdentification();
   rejoindre(code);
 }
 
